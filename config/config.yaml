@@ -11,4 +11,6 @@ web:
 write_control:
   cooldown_ms: 400
   debounce_ms: 150
+advanced:
+  enable_all_entities: false
 exports: []

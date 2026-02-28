@@ -15,6 +15,7 @@ const LOG_CATEGORY_LABELS = {
 };
 
 const state = {
+  currentView: 'home',
   rows: new Map(),
   runtimeTimer: null,
   groupOpen: new Map(),
@@ -51,7 +52,8 @@ function tooltipIcon(text) {
 function syncModalBodyState() {
   const clientsOpen = byId('clients-modal') && !byId('clients-modal').hidden;
   const noticeOpen = byId('notice-modal') && !byId('notice-modal').hidden;
-  document.body.classList.toggle('modal-open', clientsOpen || noticeOpen);
+  const confirmOpen = byId('confirm-modal') && !byId('confirm-modal').hidden;
+  document.body.classList.toggle('modal-open', clientsOpen || noticeOpen || confirmOpen);
 }
 
 function padInt(value, width = 2) {
@@ -223,6 +225,7 @@ async function api(path, options) {
 function showStatusLine() {
   if (!status) {
     byId('status-line').textContent = 'Status unavailable';
+    byId('diagnostics-line').textContent = 'Diagnostics unavailable';
     byId('clients-link').textContent = 'Clients: 0';
     return;
   }
@@ -237,11 +240,53 @@ function showStatusLine() {
     `Exports: ${status.exported_count || 0}`
   ];
 
+  if (status.enable_all_entities) {
+    summary.push('Mode: all entities');
+  }
+
   byId('clients-link').textContent = `Clients: ${connectedClients}`;
   byId('clients-link').classList.toggle('inactive', connectedClients === 0);
 
   byId('status-line').textContent = `${summary.join(' | ')}${status.ha_reason ? ` | ${status.ha_reason}` : ''}`;
   byId('status-line').className = haOk && emberOk ? 'status-ok' : 'status-bad';
+  renderGlobalEnableNotice(Boolean(status.enable_all_entities));
+  renderDiagnosticsLine();
+}
+
+function humanBytes(value) {
+  const bytes = Number(value);
+  if (!Number.isFinite(bytes) || bytes < 0) {
+    return 'n/a';
+  }
+
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let idx = 0;
+  let n = bytes;
+  while (n >= 1024 && idx < units.length - 1) {
+    n /= 1024;
+    idx += 1;
+  }
+
+  const fixed = n >= 100 || idx === 0 ? 0 : 1;
+  return `${n.toFixed(fixed)} ${units[idx]}`;
+}
+
+function renderDiagnosticsLine() {
+  const line = byId('diagnostics-line');
+  if (!line) {
+    return;
+  }
+
+  if (!status || !status.diagnostics) {
+    line.textContent = 'Diagnostics unavailable';
+    return;
+  }
+
+  const d = status.diagnostics;
+  const ram = humanBytes(d.ram_bytes);
+  const cpu = Number.isFinite(Number(d.cpu_percent)) ? `${Number(d.cpu_percent).toFixed(1)}%` : 'n/a';
+  const storage = humanBytes(d.storage_bytes);
+  line.textContent = `Diagnostics: RAM ${ram} | CPU ${cpu} | Storage ${storage}`;
 }
 
 function renderErrors() {
@@ -472,6 +517,34 @@ function fillConfig() {
   byId('write-debounce').value = config.write_control && Number.isFinite(Number(config.write_control.debounce_ms))
     ? Number(config.write_control.debounce_ms)
     : 150;
+
+  const enableAll = Boolean(config && config.advanced && config.advanced.enable_all_entities === true);
+  if (byId('enable-all-entities')) {
+    byId('enable-all-entities').checked = enableAll;
+  }
+  renderGlobalEnableNotice(enableAll);
+}
+
+function setActiveView(viewName) {
+  state.currentView = viewName;
+  const panels = document.querySelectorAll('.view-panel');
+  for (const panel of panels) {
+    panel.classList.toggle('active', panel.id === `view-${viewName}`);
+  }
+
+  const links = document.querySelectorAll('.menu-link[data-view]');
+  for (const link of links) {
+    const isActive = link.getAttribute('data-view') === viewName;
+    link.classList.toggle('active', isActive);
+  }
+}
+
+function renderGlobalEnableNotice(enableAllEntities) {
+  const note = byId('global-enable-note');
+  if (!note) {
+    return;
+  }
+  note.hidden = !enableAllEntities;
 }
 
 function defaultAccessForOptions(accessOptions) {
@@ -754,7 +827,10 @@ function renderEntities() {
       selectedCount += 1;
     }
   }
-  byId('selected-count').textContent = `${selectedCount} selected`;
+  const enableAll = Boolean(config && config.advanced && config.advanced.enable_all_entities === true);
+  byId('selected-count').textContent = enableAll
+    ? `${selectedCount} selected (ignored while Enable All Entities is on)`
+    : `${selectedCount} selected`;
 
   const baseItems = [];
   const domainCounts = new Map();
@@ -1059,6 +1135,10 @@ function buildConfigPayload() {
       cooldown_ms: Math.max(0, Number(byId('write-cooldown').value) || 0),
       debounce_ms: Math.max(0, Number(byId('write-debounce').value) || 0)
     },
+    advanced: {
+      ...(config.advanced || {}),
+      enable_all_entities: Boolean(byId('enable-all-entities').checked)
+    },
     exports: exportsList
   };
 }
@@ -1187,8 +1267,55 @@ async function refreshEntities() {
   }
 }
 
+function showConfirm(message, title = 'Confirm change') {
+  return new Promise((resolve) => {
+    const modal = byId('confirm-modal');
+    const titleEl = byId('confirm-title');
+    const msgEl = byId('confirm-message');
+    const cancelBtn = byId('confirm-cancel');
+    const okBtn = byId('confirm-ok');
+
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    modal.hidden = false;
+    syncModalBodyState();
+
+    let closed = false;
+    const close = (result) => {
+      if (closed) {
+        return;
+      }
+      closed = true;
+      modal.hidden = true;
+      syncModalBodyState();
+      resolve(result);
+    };
+
+    const onBackdrop = (event) => {
+      const closeHit = event.target && event.target.getAttribute('data-role') === 'confirm-modal-close';
+      if (!closeHit) {
+        return;
+      }
+      modal.removeEventListener('click', onBackdrop);
+      close(false);
+    };
+
+    modal.addEventListener('click', onBackdrop);
+    cancelBtn.onclick = () => {
+      modal.removeEventListener('click', onBackdrop);
+      close(false);
+    };
+    okBtn.onclick = () => {
+      modal.removeEventListener('click', onBackdrop);
+      close(true);
+    };
+  });
+}
+
 function wirePageHandlers() {
   byId('save-btn').addEventListener('click', saveAndApply);
+  byId('connection-save-btn').addEventListener('click', saveAndApply);
+  byId('advanced-save-btn').addEventListener('click', saveAndApply);
   byId('reload-btn').addEventListener('click', reloadOnly);
   byId('refresh-btn').addEventListener('click', refreshEntities);
   byId('search').addEventListener('input', renderEntities);
@@ -1282,6 +1409,10 @@ function wirePageHandlers() {
     if (event.key !== 'Escape') {
       return;
     }
+    if (!byId('confirm-modal').hidden) {
+      byId('confirm-cancel').click();
+      return;
+    }
     if (!byId('notice-modal').hidden) {
       byId('notice-ok').click();
       return;
@@ -1314,6 +1445,34 @@ function wirePageHandlers() {
     renderEntities();
   });
 
+  const menuLinks = document.querySelectorAll('.menu-link[data-view]');
+  for (const link of menuLinks) {
+    link.addEventListener('click', () => {
+      const view = link.getAttribute('data-view') || 'home';
+      setActiveView(view);
+    });
+  }
+
+  byId('enable-all-entities').addEventListener('change', async (event) => {
+    const checked = Boolean(event.target.checked);
+    if (!checked) {
+      renderGlobalEnableNotice(false);
+      return;
+    }
+
+    const confirmed = await showConfirm(
+      'Enable All Entities will share all available Home Assistant entities and parameters to Ember+. This can create significant system load. Continue?',
+      'Enable All Entities'
+    );
+    if (!confirmed) {
+      event.target.checked = false;
+      renderGlobalEnableNotice(false);
+      return;
+    }
+
+    renderGlobalEnableNotice(true);
+  });
+
   wireEntityHandlers();
 }
 
@@ -1330,6 +1489,7 @@ function startRuntimePolling() {
 }
 
 (async function init() {
+  setActiveView('home');
   wirePageHandlers();
 
   try {

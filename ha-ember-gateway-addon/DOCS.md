@@ -1,5 +1,7 @@
 # HA Ember Gateway add-on
 
+Support policy: community-maintained with limited maintenance and no guaranteed direct support.
+
 ## What this add-on does
 
 This add-on exposes selected Home Assistant entities as an Ember+ tree and provides a web UI for configuring exports.

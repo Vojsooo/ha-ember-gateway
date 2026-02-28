@@ -20,6 +20,9 @@ const DEFAULT_CONFIG = {
     cooldown_ms: 400,
     debounce_ms: 150
   },
+  advanced: {
+    enable_all_entities: false
+  },
   exports: []
 };
 
@@ -126,6 +129,10 @@ function normalizeConfig(input) {
     write_control: {
       ...DEFAULT_CONFIG.write_control,
       ...(input && input.write_control ? input.write_control : {})
+    },
+    advanced: {
+      ...DEFAULT_CONFIG.advanced,
+      ...(input && input.advanced ? input.advanced : {})
     }
   };
 
@@ -158,6 +165,12 @@ function normalizeConfig(input) {
     debounce_ms: normalizeNonNegativeInt(
       merged.write_control && merged.write_control.debounce_ms,
       DEFAULT_CONFIG.write_control.debounce_ms
+    )
+  };
+
+  merged.advanced = {
+    enable_all_entities: Boolean(
+      merged.advanced && merged.advanced.enable_all_entities === true
     )
   };
 

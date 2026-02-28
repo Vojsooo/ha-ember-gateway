@@ -2,6 +2,8 @@
 
 Bridge selected Home Assistant entities to Ember+ clients.
 
+> Support policy: This is a community-maintained project with limited maintenance and no guaranteed direct support.
+
 ## Services
 
 - Ember+ provider: `tcp/9000`
@@ -17,7 +19,7 @@ docker run -d \
   -p 9000:9000 \
   -p 8090:8090 \
   -v /path/on/host/config.yaml:/app/config/config.yaml \
-  ghcr.io/vojsooo/ha-ember-gateway-amd64:0.1.1
+  ghcr.io/vojsooo/ha-ember-gateway-amd64:0.1.3
 ```
 
 ## Config file
@@ -77,7 +79,8 @@ Image publishing is automated by `.github/workflows/build-images.yml` on Git tag
 
 ## Notes
 
-- You need a Home Assistant long-lived token for API access.
+- Standalone mode requires a Home Assistant long-lived token for API access.
+- Add-on mode can auto-connect through supervisor with URL/token left empty.
 - Use the web UI to select entities and save config.
 - Climate entities expose virtual parameters (for example `::target_temperature`, `::fan_mode`) so Ember+ clients can map and write setpoints and mode sub-values.
 - Ember+ tree layout is hierarchical: `root -> device -> type/domain -> exported parameters` (only enabled exports generate nodes).

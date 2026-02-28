@@ -1,14 +1,17 @@
 const path = require('path');
 const http = require('http');
+const fs = require('fs');
+const os = require('os');
 
 const { loadConfig, saveConfig } = require('./config');
 const { HomeAssistantClient } = require('./ha-client');
 const { EmberBridge } = require('./ember-bridge');
-const { createApiServer, accessOptionsForEntity, resolveAccessFromExport } = require('./api-server');
+const { createApiServer, accessOptionsForEntity, resolveAccessFromExport, entitiesFromStates } = require('./api-server');
 const { parseEntityRef } = require('./entity-ref');
 
 const configPath = process.env.GATEWAY_CONFIG || path.join('/app', 'config', 'config.yaml');
 const LOG_LIMIT = 500;
+const STORAGE_SCAN_INTERVAL_MS = 60000;
 
 let currentConfig = loadConfig(configPath);
 currentConfig = saveConfig(configPath, currentConfig);
@@ -19,6 +22,13 @@ const runtimeLogs = [];
 let applyQueue = Promise.resolve();
 let applySequence = 0;
 const writeStateByEntity = new Map();
+const storageRootPath = path.dirname(configPath);
+const cpuTracker = {
+  cores: Math.max(1, os.cpus().length),
+  lastUsage: process.cpuUsage(),
+  lastAtNs: process.hrtime.bigint(),
+  percent: 0
+};
 
 const status = {
   ha_connected: false,
@@ -27,6 +37,14 @@ const status = {
   ember_running: false,
   exported_count: 0,
   last_reload: null,
+  diagnostics: {
+    cpu_percent: 0,
+    ram_bytes: 0,
+    ram_heap_used_bytes: 0,
+    storage_bytes: 0,
+    storage_path: storageRootPath,
+    sampled_at: null
+  },
   errors: []
 };
 
@@ -47,6 +65,81 @@ function normalizeNonNegativeInt(value, fallback = 0) {
     return fallback;
   }
   return Math.floor(parsed);
+}
+
+function clampNumber(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function measureCpuPercent() {
+  const nowNs = process.hrtime.bigint();
+  const elapsedMs = Number(nowNs - cpuTracker.lastAtNs) / 1e6;
+  const usageDelta = process.cpuUsage(cpuTracker.lastUsage);
+
+  cpuTracker.lastAtNs = nowNs;
+  cpuTracker.lastUsage = process.cpuUsage();
+
+  if (!Number.isFinite(elapsedMs) || elapsedMs <= 0) {
+    return cpuTracker.percent;
+  }
+
+  const usedMs = (usageDelta.user + usageDelta.system) / 1000;
+  const percent = (usedMs / (elapsedMs * cpuTracker.cores)) * 100;
+  cpuTracker.percent = clampNumber(Number.isFinite(percent) ? percent : 0, 0, 100);
+  return cpuTracker.percent;
+}
+
+function directorySizeBytes(rootDir) {
+  if (!rootDir || !fs.existsSync(rootDir)) {
+    return 0;
+  }
+
+  let total = 0;
+  const stack = [rootDir];
+
+  while (stack.length > 0) {
+    const current = stack.pop();
+    let entries = [];
+    try {
+      entries = fs.readdirSync(current, { withFileTypes: true });
+    } catch (_error) {
+      continue;
+    }
+
+    for (const entry of entries) {
+      const fullPath = path.join(current, entry.name);
+      try {
+        if (entry.isDirectory()) {
+          stack.push(fullPath);
+          continue;
+        }
+
+        if (entry.isFile()) {
+          const st = fs.statSync(fullPath);
+          total += st.size;
+        }
+      } catch (_error) {
+        // ignore unreadable files
+      }
+    }
+  }
+
+  return total;
+}
+
+function refreshDiagnostics(options = {}) {
+  const includeStorage = Boolean(options.includeStorage);
+  const memory = process.memoryUsage();
+
+  status.diagnostics.cpu_percent = measureCpuPercent();
+  status.diagnostics.ram_bytes = Number(memory.rss || 0);
+  status.diagnostics.ram_heap_used_bytes = Number(memory.heapUsed || 0);
+
+  if (includeStorage) {
+    status.diagnostics.storage_bytes = directorySizeBytes(storageRootPath);
+  }
+
+  status.diagnostics.sampled_at = new Date().toISOString();
 }
 
 function fallbackDeviceName(sourceEntityId, stateObj = null) {
@@ -101,6 +194,60 @@ function enrichExportsForRuntime(exportsList) {
       device_key: deviceKey
     };
   });
+}
+
+function runtimeExportFromEntity(entity) {
+  const type = String(entity.type || entity.suggested_type || 'string').trim() || 'string';
+  const accessOptions = Array.isArray(entity.access_options) && entity.access_options.length > 0
+    ? entity.access_options
+    : accessOptionsForEntity(entity.domain, Boolean(entity.is_virtual), entity.parameter_key);
+  const defaultAccess = accessOptions.includes('readWrite') ? 'readWrite' : 'read';
+  const accessResolved = resolveAccessFromExport(
+    {
+      access: entity.access,
+      access_user_set: entity.access_user_set === true
+    },
+    accessOptions,
+    defaultAccess
+  );
+
+  const enumMap = Array.isArray(entity.enum_map) && entity.enum_map.length > 0
+    ? entity.enum_map
+    : (Array.isArray(entity.enum_options) ? entity.enum_options.map((key, idx) => ({ key, value: idx })) : []);
+
+  const description = nonEmptyText(entity.description)
+    || nonEmptyText(entity.friendly_name)
+    || nonEmptyText(entity.entity_id);
+
+  return {
+    entity_id: entity.entity_id,
+    identifier: nonEmptyText(entity.identifier) || slugText(entity.entity_id, 'entity'),
+    type,
+    access: accessResolved.access,
+    ...(accessResolved.access_user_set ? { access_user_set: true } : {}),
+    description,
+    ...(Number.isFinite(Number(entity.write_cooldown_ms)) ? { write_cooldown_ms: Number(entity.write_cooldown_ms) } : {}),
+    ...(Number.isFinite(Number(entity.write_debounce_ms)) ? { write_debounce_ms: Number(entity.write_debounce_ms) } : {}),
+    ...(type === 'enum' ? { enum_map: enumMap } : {})
+  };
+}
+
+function runtimeExportsFromConfig(cfg) {
+  const configuredExports = Array.isArray(cfg && cfg.exports) ? cfg.exports : [];
+  const useAllEntities = Boolean(cfg && cfg.advanced && cfg.advanced.enable_all_entities === true);
+
+  if (!useAllEntities) {
+    return enrichExportsForRuntime(configuredExports);
+  }
+
+  const states = haClient.getStatesArray();
+  const allEntities = entitiesFromStates(
+    states,
+    configuredExports,
+    (entityId, stateObj) => haClient.getEntityMeta(entityId, stateObj)
+  );
+  const autoExports = allEntities.map(runtimeExportFromEntity);
+  return enrichExportsForRuntime(autoExports);
 }
 
 function getWriteControlForEntity(entityId, evt = null) {
@@ -268,8 +415,12 @@ function getLogs() {
 }
 
 function getStatusSnapshot() {
+  refreshDiagnostics({ includeStorage: false });
   return {
     ...status,
+    enable_all_entities: Boolean(
+      currentConfig && currentConfig.advanced && currentConfig.advanced.enable_all_entities === true
+    ),
     connected_clients: emberBridge.getConnectedClients()
   };
 }
@@ -297,15 +448,16 @@ async function applyConfigNow(reason = 'manual') {
 
   try {
     haClient.configure(cfg.home_assistant.url, cfg.home_assistant.token);
+    const hasHaCredentials = Boolean(haClient.wsUrl && haClient.token);
 
-    if (cfg.home_assistant.url && cfg.home_assistant.token) {
+    if (hasHaCredentials) {
       await haClient.start();
       if (haClient.authenticated) {
         await haClient.refreshStates();
       }
     } else {
       await haClient.stop();
-      status.ha_reason = 'Configure Home Assistant URL and token';
+      status.ha_reason = 'Configure Home Assistant URL and token (or run as HA add-on with API enabled)';
       addLog('warn', 'ha', 'Home Assistant URL or token is missing');
     }
   } catch (error) {
@@ -319,8 +471,9 @@ async function applyConfigNow(reason = 'manual') {
       rootIdentifier: cfg.ember.root_identifier
     });
 
-    const runtimeExports = enrichExportsForRuntime(cfg.exports);
+    const runtimeExports = runtimeExportsFromConfig(cfg);
     await emberBridge.restart(runtimeExports, new Map(haClient.stateCache));
+    status.exported_count = runtimeExports.length;
   } catch (error) {
     pushError(`Ember apply failed: ${error.message}`);
   }
@@ -333,9 +486,8 @@ async function applyConfigNow(reason = 'manual') {
   writeStateByEntity.clear();
 
   status.ember_running = emberBridge.running;
-  status.exported_count = cfg.exports.length;
   status.last_reload = new Date().toISOString();
-  addLog('info', 'system', `Configuration applied (exports: ${cfg.exports.length}, ember_running: ${status.ember_running})`);
+  addLog('info', 'system', `Configuration applied (exports: ${status.exported_count}, ember_running: ${status.ember_running})`);
 }
 
 function applyConfig(reason = 'manual') {
@@ -443,6 +595,8 @@ emberBridge.on('remote_set', async (evt) => {
 });
 
 async function boot() {
+  refreshDiagnostics({ includeStorage: true });
+
   const app = createApiServer({
     getConfig: () => currentConfig,
     setConfig: (cfg) => {
@@ -464,6 +618,14 @@ async function boot() {
   });
 
   await applyConfig('boot');
+
+  setInterval(() => {
+    try {
+      refreshDiagnostics({ includeStorage: true });
+    } catch (error) {
+      addLog('warn', 'system', `Diagnostics storage scan failed: ${error.message}`);
+    }
+  }, STORAGE_SCAN_INTERVAL_MS);
 
   setInterval(async () => {
     if (haClient.authenticated) {

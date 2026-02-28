@@ -23,7 +23,7 @@ docker run -d \
   -p 9000:9000 \
   -p 8090:8090 \
   -v /path/on/host/config.yaml:/app/config/config.yaml \
-  ghcr.io/vojsooo/ha-ember-gateway-amd64:0.1.5
+  ghcr.io/vojsooo/ha-ember-gateway-amd64:0.1.6
 ```
 
 ## Config file

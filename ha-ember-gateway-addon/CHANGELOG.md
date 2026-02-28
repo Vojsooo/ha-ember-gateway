@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.6
+
+- Web UI header layout update:
+  - move `Clients: x` button to the left side.
+  - move logo to the right side of header.
+  - increase header logo size by approximately 2x.
+- Home Assistant branding asset update:
+  - regenerate `icon.png` with tighter crop for larger visible symbol.
+  - regenerate `logo.png` with tighter crop for larger, more readable add-on info branding.
+
 ## 0.1.5
 
 - Add official HA Ember Gateway branding assets to the repository.

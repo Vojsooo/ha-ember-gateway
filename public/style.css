@@ -61,6 +61,10 @@ body.modal-open {
   display: block;
 }
 
+#view-logs {
+  min-height: calc(100vh - 180px);
+}
+
 .menu-group {
   margin-bottom: 10px;
 }
@@ -800,6 +804,22 @@ th {
   background: rgba(10, 18, 31, 0.65);
 }
 
+.logs-view-card {
+  min-height: calc(100vh - 180px);
+  display: flex;
+  flex-direction: column;
+}
+
+.logs-view-card .logs-toolbar {
+  flex: 0 0 auto;
+}
+
+.logs-view-card .log-wrap {
+  flex: 1 1 auto;
+  min-height: 420px;
+  max-height: none;
+}
+
 .log-badge {
   display: inline-flex;
   align-items: center;
@@ -1118,6 +1138,18 @@ tr.log-level-warn td {
 
   .app-layout {
     grid-template-columns: 1fr;
+  }
+
+  #view-logs {
+    min-height: 0;
+  }
+
+  .logs-view-card {
+    min-height: 0;
+  }
+
+  .logs-view-card .log-wrap {
+    min-height: 300px;
   }
 
   .app-menu {

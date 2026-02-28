@@ -570,7 +570,7 @@ function createApiServer(options) {
   app.get('/api/info', (_req, res) => {
     res.json({
       config_file: configFilePath,
-      version: '0.1.3'
+      version: '0.1.4'
     });
   });
 

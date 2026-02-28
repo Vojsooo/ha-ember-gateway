@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4
+
+- Add dedicated `Logs` menu section.
+- Move `Runtime Logs` out of Dashboard into the new Logs view.
+- Expand logs view to use full browser height for improved log monitoring.
+
 ## 0.1.3
 
 - Add clear support policy messaging (limited maintenance, no direct support) in GitHub documentation and add-on metadata.

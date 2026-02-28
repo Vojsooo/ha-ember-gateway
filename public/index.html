@@ -26,6 +26,10 @@
             <button type="button" class="menu-link active" data-view="home">Dashboard</button>
           </div>
           <div class="menu-group">
+            <h2 class="menu-group-title">Logs</h2>
+            <button type="button" class="menu-link" data-view="logs">Runtime Logs</button>
+          </div>
+          <div class="menu-group">
             <h2 class="menu-group-title">Settings</h2>
             <button type="button" class="menu-link" data-view="connection">Connection</button>
             <button type="button" class="menu-link" data-view="advanced">Advanced</button>
@@ -88,7 +92,14 @@
               </div>
             </section>
 
-            <section class="card" id="logs-box">
+            <section class="card" id="errors-box">
+              <h2>Recent Errors</h2>
+              <ul id="errors-list"></ul>
+            </section>
+          </div>
+
+          <div id="view-logs" class="view-panel">
+            <section class="card logs-view-card" id="logs-box">
               <h2>Runtime Logs</h2>
               <div class="logs-toolbar">
                 <div class="logs-top-actions">
@@ -128,11 +139,6 @@
                   <tbody id="log-rows"></tbody>
                 </table>
               </div>
-            </section>
-
-            <section class="card" id="errors-box">
-              <h2>Recent Errors</h2>
-              <ul id="errors-list"></ul>
             </section>
           </div>
 

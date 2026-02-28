@@ -4,7 +4,7 @@ const yaml = require('js-yaml');
 
 const DEFAULT_CONFIG = {
   home_assistant: {
-    url: 'http://192.168.6.9:8123',
+    url: '',
     token: ''
   },
   ember: {

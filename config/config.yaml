@@ -1,5 +1,5 @@
 home_assistant:
-  url: http://homeassistant.local:8123
+  url: ''
   token: ''
 ember:
   host: 0.0.0.0

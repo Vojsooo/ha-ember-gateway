@@ -9,18 +9,47 @@ function toWsUrl(baseUrl) {
   }
 
   if (trimmed.startsWith('ws://') || trimmed.startsWith('wss://')) {
-    return `${trimmed.replace(/\/$/, '')}/api/websocket`;
+    const wsBase = trimmed.replace(/\/$/, '');
+    if (wsBase.endsWith('/core') || wsBase.endsWith('/core/api') || wsBase.endsWith('/core/websocket')) {
+      return wsBase.replace(/\/core(?:\/api|\/websocket)?$/, '/core/websocket');
+    }
+    if (wsBase.endsWith('/api') || wsBase.endsWith('/api/websocket')) {
+      return wsBase.replace(/\/api(?:\/websocket)?$/, '/api/websocket');
+    }
+    return `${wsBase}/api/websocket`;
   }
 
-  if (trimmed.startsWith('http://')) {
-    return `${trimmed.replace(/^http:\/\//, 'ws://').replace(/\/$/, '')}/api/websocket`;
-  }
+  const withScheme = trimmed.includes('://') ? trimmed : `http://${trimmed}`;
+  try {
+    const parsed = new URL(withScheme);
+    const wsProtocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+    const origin = `${wsProtocol}//${parsed.host}`;
+    const path = parsed.pathname.replace(/\/+$/, '');
 
-  if (trimmed.startsWith('https://')) {
-    return `${trimmed.replace(/^https:\/\//, 'wss://').replace(/\/$/, '')}/api/websocket`;
-  }
+    if (!path || path === '/') {
+      return `${origin}/api/websocket`;
+    }
 
-  return `ws://${trimmed.replace(/\/$/, '')}/api/websocket`;
+    if (path === '/api' || path === '/api/websocket') {
+      return `${origin}/api/websocket`;
+    }
+
+    if (path === '/core' || path === '/core/api' || path === '/core/websocket') {
+      return `${origin}/core/websocket`;
+    }
+
+    return `${origin}${path}/api/websocket`;
+  } catch (error) {
+    return `ws://${trimmed.replace(/\/$/, '')}/api/websocket`;
+  }
+}
+
+function isSupervisorModeUrl(url) {
+  const text = String(url || '').trim().toLowerCase();
+  if (!text) {
+    return false;
+  }
+  return text.includes('://supervisor/core') || text.includes('://supervisor.local/core');
 }
 
 function firstNonEmptyText(...values) {
@@ -86,6 +115,7 @@ class HomeAssistantClient extends EventEmitter {
     this.url = '';
     this.token = '';
     this.wsUrl = '';
+    this.connectionMode = 'direct';
     this.ws = null;
     this.connected = false;
     this.authenticated = false;
@@ -101,9 +131,30 @@ class HomeAssistantClient extends EventEmitter {
   }
 
   configure(url, token) {
-    this.url = String(url || '').trim();
-    this.token = String(token || '').trim();
+    const configuredUrl = String(url || '').trim();
+    const configuredToken = String(token || '').trim();
+    const supervisorToken = String(process.env.SUPERVISOR_TOKEN || '').trim();
+    const hasSupervisorToken = Boolean(supervisorToken);
+
+    if (!configuredUrl && hasSupervisorToken) {
+      this.url = 'http://supervisor/core';
+      this.token = supervisorToken;
+      this.wsUrl = 'ws://supervisor/core/websocket';
+      this.connectionMode = 'supervisor';
+      return;
+    }
+
+    this.url = configuredUrl;
     this.wsUrl = toWsUrl(this.url);
+
+    if (!configuredToken && hasSupervisorToken && isSupervisorModeUrl(this.url)) {
+      this.token = supervisorToken;
+      this.connectionMode = 'supervisor';
+      return;
+    }
+
+    this.token = configuredToken;
+    this.connectionMode = 'direct';
   }
 
   async start() {
@@ -171,7 +222,7 @@ class HomeAssistantClient extends EventEmitter {
       return;
     }
 
-    console.log(`[ha] Connecting to ${this.wsUrl}`);
+    console.log(`[ha] Connecting to ${this.wsUrl} (${this.connectionMode})`);
 
     this.ws = new WebSocket(this.wsUrl, {
       handshakeTimeout: 10000

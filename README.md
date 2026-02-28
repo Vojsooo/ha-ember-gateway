@@ -26,8 +26,8 @@ Example:
 
 ```yaml
 home_assistant:
-  url: http://homeassistant.local:8123
-  token: "<long-lived-access-token>"
+  url: ""
+  token: ""
 ember:
   host: 0.0.0.0
   port: 9000
@@ -41,6 +41,17 @@ exports:
     type: real
     access: read
 ```
+
+Standalone mode:
+
+- set `home_assistant.url` to your HA URL (for example `http://homeassistant.local:8123`)
+- set `home_assistant.token` to a long-lived access token
+
+Home Assistant add-on mode:
+
+- leave `home_assistant.url` empty
+- leave `home_assistant.token` empty
+- the app auto-detects add-on runtime and connects through supervisor proxy using `SUPERVISOR_TOKEN`
 
 By default, the app reads config from `/app/config/config.yaml`. Override with:
 

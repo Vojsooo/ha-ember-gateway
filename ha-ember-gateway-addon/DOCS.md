@@ -19,9 +19,14 @@ The gateway stores and loads its runtime config from:
 
 Open the web UI on port `8090` and configure:
 
-- Home Assistant URL
-- Long-lived access token
 - Exported entities
+
+For this add-on, the Home Assistant connection is automatic:
+
+- keep Home Assistant URL empty
+- keep token empty
+
+The gateway auto-connects through supervisor proxy using the injected `SUPERVISOR_TOKEN`.
 
 ## Standalone and add-on parity
 

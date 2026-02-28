@@ -1,0 +1,24 @@
+name: "HA Ember Gateway"
+slug: "ha_ember_gateway"
+description: "Bridge selected Home Assistant entities to Ember+ clients."
+version: "0.1.0"
+url: "https://github.com/Vojsooo/ha-ember-gateway"
+arch:
+  - amd64
+  - aarch64
+startup: services
+boot: auto
+init: false
+ingress: false
+ports:
+  8090/tcp: 8090
+  9000/tcp: 9000
+ports_description:
+  8090/tcp: "Web configuration UI"
+  9000/tcp: "Ember+ TCP server"
+webui: "http://[HOST]:[PORT:8090]"
+environment:
+  GATEWAY_CONFIG: "/data/config.yaml"
+options: {}
+schema: {}
+image: "ghcr.io/Vojsooo/ha-ember-gateway-{arch}"

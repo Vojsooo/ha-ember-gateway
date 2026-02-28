@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>HA Ember Gateway</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header>
+        <div class="header-main">
+          <h1>Home Assistant Ember+ Gateway</h1>
+          <button id="clients-link" type="button" class="header-link-btn">Clients: 0</button>
+        </div>
+        <p id="status-line">Loading...</p>
+        <p class="header-author">Author: Filip Vojsovic (contact: office@vjsproduction.sk)</p>
+      </header>
+
+      <section class="card">
+        <h2>Connection</h2>
+        <div class="grid">
+          <label>
+            <span class="label-with-tip">
+              Home Assistant URL
+              <span class="tooltip-chip" tabindex="0" data-tooltip="Base URL of your Home Assistant instance (for example http://192.168.6.9:8123)." aria-label="Base URL of your Home Assistant instance.">?</span>
+            </span>
+            <input id="ha-url" type="text" placeholder="http://192.168.6.9:8123" title="Base URL of your Home Assistant instance." />
+          </label>
+          <label>
+            <span class="label-with-tip">
+              Long-lived Token
+              <span class="tooltip-chip" tabindex="0" data-tooltip="Home Assistant long-lived access token used to authenticate API and websocket access." aria-label="Home Assistant long-lived access token.">?</span>
+            </span>
+            <input id="ha-token" type="password" placeholder="Paste HA token" title="Home Assistant long-lived access token." />
+          </label>
+          <label>
+            <span class="label-with-tip">
+              Ember Port
+              <span class="tooltip-chip" tabindex="0" data-tooltip="TCP port where Ember+ clients connect to this gateway provider." aria-label="TCP port for Ember+ clients.">?</span>
+            </span>
+            <input id="ember-port" type="number" min="1" max="65535" title="TCP port for Ember+ client connections." />
+          </label>
+          <label>
+            <span class="label-with-tip">
+              Ember Root Identifier
+              <span class="tooltip-chip" tabindex="0" data-tooltip="Identifier name of the top root node in the Ember+ tree." aria-label="Root node identifier in Ember+ tree.">?</span>
+            </span>
+            <input id="ember-root" type="text" title="Root node identifier in Ember+ tree." />
+          </label>
+          <label>
+            <span class="label-with-tip">
+              Write Cooldown (ms)
+              <span class="tooltip-chip" tabindex="0" data-tooltip="Global minimum interval between forwarded writes to Home Assistant when per-parameter override is not set." aria-label="Global write cooldown.">?</span>
+            </span>
+            <input id="write-cooldown" type="number" min="0" step="1" title="Global write cooldown in milliseconds." />
+          </label>
+          <label>
+            <span class="label-with-tip">
+              Write Debounce (ms)
+              <span class="tooltip-chip" tabindex="0" data-tooltip="Global delay before forwarding a write. Multiple quick writes collapse into the latest value." aria-label="Global write debounce.">?</span>
+            </span>
+            <input id="write-debounce" type="number" min="0" step="1" title="Global write debounce in milliseconds." />
+          </label>
+        </div>
+      </section>
+
+      <section class="card sticky-controls" id="controls-menu">
+        <h2>Quick Controls</h2>
+        <div class="sticky-actions">
+          <button id="save-btn">Save and Apply</button>
+          <span class="action-with-tip">
+            <button id="reload-btn" class="secondary">Reload</button>
+            <span class="tooltip-chip" tabindex="0" data-tooltip="Re-applies the currently saved configuration and rebuilds runtime services." aria-label="Reload behavior help">?</span>
+          </span>
+          <span class="action-with-tip">
+            <button id="refresh-btn" class="secondary">Refresh Entities</button>
+            <span class="tooltip-chip" tabindex="0" data-tooltip="Refreshes the entity list from Home Assistant without saving configuration changes." aria-label="Refresh entities behavior help">?</span>
+          </span>
+        </div>
+
+        <div class="sticky-filters">
+          <input id="search" type="search" placeholder="Filter by entity ID or name" />
+          <label class="inline-check">
+            <input id="show-enabled-only" type="checkbox" />
+            Show enabled only
+          </label>
+          <span id="selected-count">0 selected</span>
+        </div>
+
+        <div class="filter-strip">
+          <span class="filter-label">Type Filter</span>
+          <div id="domain-filters" class="chip-list"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Exported Entities</h2>
+        <div id="entities-empty" class="muted-line">No entities match current filters.</div>
+        <div id="entity-groups" class="group-list"></div>
+      </section>
+
+      <section class="card" id="clients-box">
+        <h2>Connected Clients</h2>
+        <div id="clients-empty" class="muted-line">No connected Ember+ clients.</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Remote Address</th>
+                <th>Stats</th>
+              </tr>
+            </thead>
+            <tbody id="client-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card" id="logs-box">
+        <h2>Runtime Logs</h2>
+        <div class="logs-toolbar">
+          <div class="logs-top-actions">
+            <input id="logs-search" type="search" placeholder="Search logs (message/details/category)" />
+            <label class="inline-check">
+              <input id="logs-errors-only" type="checkbox" />
+              Warn/Error only
+            </label>
+            <label class="inline-check">
+              <input id="logs-pause" type="checkbox" />
+              Pause live
+            </label>
+            <button id="logs-clear-filters" type="button" class="secondary">Clear Filters</button>
+          </div>
+          <div id="logs-summary" class="muted-line">Showing 0/0</div>
+          <div class="logs-filter-row">
+            <span class="filter-label">Category</span>
+            <div id="logs-category-filters" class="chip-list"></div>
+          </div>
+          <div class="logs-filter-row">
+            <span class="filter-label">Level</span>
+            <div id="logs-level-filters" class="chip-list"></div>
+          </div>
+        </div>
+        <div id="logs-empty" class="muted-line">No log entries yet.</div>
+        <div class="log-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Level</th>
+                <th>Category</th>
+                <th>Message</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="log-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card" id="errors-box">
+        <h2>Recent Errors</h2>
+        <ul id="errors-list"></ul>
+      </section>
+
+      <div id="clients-modal" class="modal" hidden>
+        <div class="modal-backdrop" data-role="clients-modal-close"></div>
+        <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="clients-modal-title">
+          <div class="modal-head">
+            <h3 id="clients-modal-title">Connected Clients</h3>
+            <button id="clients-modal-close" type="button" class="secondary">Close</button>
+          </div>
+          <div id="clients-modal-empty" class="muted-line">No connected Ember+ clients.</div>
+          <ul id="clients-modal-list" class="clients-modal-list"></ul>
+        </div>
+      </div>
+
+      <div id="notice-modal" class="modal notice-modal" hidden>
+        <div class="modal-backdrop" data-role="notice-modal-close"></div>
+        <div id="notice-panel" class="notice-panel" role="dialog" aria-modal="true" aria-labelledby="notice-title">
+          <h3 id="notice-title">Saved</h3>
+          <p id="notice-message">Configuration saved and applied.</p>
+          <div class="notice-actions">
+            <button id="notice-ok" type="button">OK</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

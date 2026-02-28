@@ -1,6 +1,6 @@
 {
   "name": "ha-ember-gateway",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Home Assistant to Ember+ gateway with web configuration UI",
   "main": "src/index.js",
   "type": "commonjs",

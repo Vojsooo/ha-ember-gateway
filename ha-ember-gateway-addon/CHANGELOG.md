@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.7
+
+- Use the exact provided logo file (`ChatGPT Image Feb 28, 2026, 08_53_44 AM.png`) as:
+  - web header logo on the right side.
+  - Home Assistant add-on info logo (`ha-ember-gateway-addon/logo.png`).
+- Increase web header logo display size for better readability.
+
 ## 0.1.6
 
 - Web UI header layout update:

@@ -1,7 +1,7 @@
 name: "HA Ember Gateway"
 slug: "ha_ember_gateway"
 description: "Bridge selected Home Assistant entities to Ember+ clients."
-version: "0.1.0"
+version: "0.1.1"
 url: "https://github.com/Vojsooo/ha-ember-gateway"
 arch:
   - amd64
@@ -21,4 +21,4 @@ environment:
   GATEWAY_CONFIG: "/data/config.yaml"
 options: {}
 schema: {}
-image: "ghcr.io/Vojsooo/ha-ember-gateway-{arch}"
+image: "ghcr.io/vojsooo/ha-ember-gateway-{arch}"

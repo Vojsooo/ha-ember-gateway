@@ -78,8 +78,8 @@ git push origin v0.1.1
 ```
 
 4. GitHub Actions builds and pushes:
-   - `ghcr.io/<username>/ha-ember-gateway-amd64:0.1.1`
-   - `ghcr.io/<username>/ha-ember-gateway-aarch64:0.1.1`
+   - `ghcr.io/vojsooo/ha-ember-gateway-amd64:0.1.1`
+   - `ghcr.io/vojsooo/ha-ember-gateway-aarch64:0.1.1`
 
 ## 7) Make GHCR package public
 

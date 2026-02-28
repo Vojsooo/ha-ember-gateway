@@ -1,5 +1,9 @@
 # HA Ember Gateway
 
+<p align="center">
+  <img src="public/assets/haember-logo.png" alt="HA Ember Gateway logo" width="360" />
+</p>
+
 Bridge selected Home Assistant entities to Ember+ clients.
 
 > Support policy: This is a community-maintained project with limited maintenance and no guaranteed direct support.
@@ -19,7 +23,7 @@ docker run -d \
   -p 9000:9000 \
   -p 8090:8090 \
   -v /path/on/host/config.yaml:/app/config/config.yaml \
-  ghcr.io/vojsooo/ha-ember-gateway-amd64:0.1.4
+  ghcr.io/vojsooo/ha-ember-gateway-amd64:0.1.5
 ```
 
 ## Config file

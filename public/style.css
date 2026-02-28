@@ -117,10 +117,29 @@ header {
   flex-wrap: wrap;
 }
 
+.header-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.header-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  box-shadow:
+    0 0 0 1px rgba(96, 165, 250, 0.25),
+    0 6px 14px rgba(2, 6, 23, 0.5);
+}
+
 header h1 {
   margin: 0;
   font-size: 1.52rem;
   letter-spacing: 0.01em;
+  line-height: 1.1;
 }
 
 #status-line {
@@ -1163,6 +1182,10 @@ tr.log-level-warn td {
   .header-main {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .header-brand {
+    width: 100%;
   }
 
   .sticky-actions {

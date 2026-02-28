@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.5
+
+- Add official HA Ember Gateway branding assets to the repository.
+- Add logo to web UI header (top-left) and configure web favicon.
+- Bundle add-on `icon.png` and `logo.png` so Home Assistant shows branded app icon and add-on info logo.
+- Add logo to GitHub main page (`README.md`).
+
 ## 0.1.4
 
 - Add dedicated `Logs` menu section.

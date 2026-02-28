@@ -1,7 +1,7 @@
 name: "HA Ember Gateway"
 slug: "ha_ember_gateway"
 description: "Community app (limited maintenance, no support): bridge Home Assistant entities to Ember+ clients."
-version: "0.1.4"
+version: "0.1.5"
 url: "https://github.com/Vojsooo/ha-ember-gateway"
 arch:
   - amd64

@@ -106,9 +106,13 @@ body.modal-open {
 }
 
 header {
-  position: relative;
   margin-bottom: 14px;
-  padding-right: 252px;
+}
+
+header::after {
+  content: '';
+  display: block;
+  clear: both;
 }
 
 .header-main {
@@ -128,14 +132,13 @@ header {
 }
 
 .header-logo {
-  position: absolute;
-  top: 0;
-  right: 0;
+  float: right;
   width: 220px;
   height: auto;
   aspect-ratio: 1 / 1;
   border-radius: 10px;
   object-fit: contain;
+  margin: 0 0 8px 16px;
   box-shadow:
     0 0 0 1px rgba(96, 165, 250, 0.25),
     0 6px 14px rgba(2, 6, 23, 0.5);
@@ -1189,18 +1192,16 @@ tr.log-level-warn td {
     margin-bottom: 8px;
   }
 
-  header {
-    padding-right: 0;
-  }
-
   .header-left {
     width: 100%;
   }
 
   .header-logo {
-    position: static;
+    float: none;
+    display: block;
     width: 150px;
     height: auto;
+    margin: 0 auto 8px;
   }
 
   .sticky-actions {

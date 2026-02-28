@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.9
+
+- Fix desktop header layout gap:
+  - move logo rendering to float-right layout outside the title row.
+  - remove reserved empty top-left area under title.
+  - keep right-side branding card and left-side title/clients line.
+
 ## 0.1.8
 
 - Refine header layout to remove large empty gap on desktop:

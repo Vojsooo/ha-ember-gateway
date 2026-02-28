@@ -106,14 +106,17 @@ body.modal-open {
 }
 
 header {
+  position: relative;
   margin-bottom: 14px;
+  padding-right: 252px;
 }
 
 .header-main {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
 }
 
 .header-left {
@@ -121,18 +124,18 @@ header {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  flex: 1 1 auto;
   min-width: 0;
 }
 
 .header-logo {
+  position: absolute;
+  top: 0;
+  right: 0;
   width: 220px;
   height: auto;
   aspect-ratio: 1 / 1;
   border-radius: 10px;
   object-fit: contain;
-  flex: 0 0 auto;
-  margin-left: auto;
   box-shadow:
     0 0 0 1px rgba(96, 165, 250, 0.25),
     0 6px 14px rgba(2, 6, 23, 0.5);
@@ -1183,20 +1186,21 @@ tr.log-level-warn td {
   }
 
   .header-main {
-    flex-wrap: wrap;
-    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+
+  header {
+    padding-right: 0;
   }
 
   .header-left {
     width: 100%;
-    order: 2;
   }
 
   .header-logo {
-    order: 1;
+    position: static;
     width: 150px;
     height: auto;
-    margin-left: auto;
   }
 
   .sticky-actions {

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.8
+
+- Refine header layout to remove large empty gap on desktop:
+  - keep logo on right side.
+  - keep `Clients: x` and title on left side.
+  - place status/diagnostics lines directly below title area for cleaner visual flow.
+
 ## 0.1.7
 
 - Use the exact provided logo file (`ChatGPT Image Feb 28, 2026, 08_53_44 AM.png`) as:

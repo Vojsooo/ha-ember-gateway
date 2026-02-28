@@ -81,6 +81,30 @@ The add-on references prebuilt images:
 
 Image publishing is automated by `.github/workflows/build-images.yml` on Git tags (`v*`).
 
+## Home Assistant OS setup (step-by-step)
+
+1. Open Home Assistant and go to `Settings -> Add-ons -> Add-on Store`.
+2. In the Add-on Store, open the menu (top-right `...`) and select `Repositories`.
+3. Add this repository URL:
+   `https://github.com/Vojsooo/ha-ember-gateway`
+4. Close the repositories dialog and refresh the Add-on Store.
+5. Open `HA Ember Gateway` from the add-on list.
+6. Click `Install`.
+7. After install, enable:
+   `Start on boot` and optionally `Watchdog`.
+8. Click `Start`.
+9. Click `Open Web UI` (or open `http://<home-assistant-ip>:8090`).
+10. In `Settings -> Connection` inside the gateway UI:
+    leave `Home Assistant URL` empty and leave `Long-lived Token` empty.
+11. Set Ember options as needed (for example `Ember Port`, `Ember Root Identifier`) and click `Save and Apply`.
+12. Go to `Home -> Dashboard`, select entities to export, then click `Save and Apply`.
+13. Connect your Ember+ client to your Home Assistant host IP on TCP port `9000`.
+
+Notes:
+
+- In add-on mode, Home Assistant API access is automatic through supervisor (`SUPERVISOR_TOKEN`).
+- If you update the add-on and do not see UI changes, run a hard refresh in the browser.
+
 ## Notes
 
 - Standalone mode requires a Home Assistant long-lived token for API access.

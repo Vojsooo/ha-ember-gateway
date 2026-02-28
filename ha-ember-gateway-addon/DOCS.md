@@ -6,6 +6,17 @@ Support policy: community-maintained with limited maintenance and no guaranteed 
 
 This add-on exposes selected Home Assistant entities as an Ember+ tree and provides a web UI for configuring exports.
 
+## Home Assistant OS quick setup
+
+1. Go to `Settings -> Add-ons -> Add-on Store`.
+2. Open menu (`...`) -> `Repositories`.
+3. Add: `https://github.com/Vojsooo/ha-ember-gateway`.
+4. Install `HA Ember Gateway`.
+5. Start the add-on and open `Web UI`.
+6. In `Settings -> Connection`, keep Home Assistant URL empty and token empty.
+7. Save configuration and choose exported entities on the dashboard.
+8. Connect Ember+ client to Home Assistant host on TCP `9000`.
+
 ## Ports
 
 - `8090/tcp`: web configuration UI

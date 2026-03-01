@@ -81,13 +81,14 @@ git push origin v0.1.1
 4. GitHub Actions builds and pushes:
    - `ghcr.io/<your_github_username>/ha-ember-gateway-amd64:0.1.1`
    - `ghcr.io/<your_github_username>/ha-ember-gateway-aarch64:0.1.1`
+   - `ghcr.io/<your_github_username>/ha-ember-gateway-armv7:0.1.1`
 
 ## 7) Make GHCR package public
 
 Home Assistant cannot pull private images without credentials.
 
 1. GitHub -> your profile -> `Packages`.
-2. Open `ha-ember-gateway-amd64` and `ha-ember-gateway-aarch64`.
+2. Open `ha-ember-gateway-amd64`, `ha-ember-gateway-aarch64`, and `ha-ember-gateway-armv7`.
 3. Package settings -> change visibility to `Public`.
 
 ## 8) Add repository to Home Assistant

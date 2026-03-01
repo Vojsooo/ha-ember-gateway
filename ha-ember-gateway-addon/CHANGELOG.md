@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.10
+
+- Add Home Assistant add-on architecture support for `armv7`.
+- Extend image publishing workflow to build and push `linux/arm/v7` image variant.
+
 ## 0.1.9
 
 - Fix desktop header layout gap:

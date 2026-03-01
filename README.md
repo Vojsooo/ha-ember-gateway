@@ -23,7 +23,7 @@ docker run -d \
   -p 9000:9000 \
   -p 8090:8090 \
   -v /path/on/host/config.yaml:/app/config/config.yaml \
-  ghcr.io/vojsooo/ha-ember-gateway-amd64:0.1.9
+  ghcr.io/vojsooo/ha-ember-gateway-amd64:0.1.10
 ```
 
 ## Config file
@@ -78,6 +78,7 @@ The add-on references prebuilt images:
 
 - `ghcr.io/vojsooo/ha-ember-gateway-amd64:<version>`
 - `ghcr.io/vojsooo/ha-ember-gateway-aarch64:<version>`
+- `ghcr.io/vojsooo/ha-ember-gateway-armv7:<version>`
 
 Image publishing is automated by `.github/workflows/build-images.yml` on Git tags (`v*`).
 

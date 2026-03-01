@@ -25,10 +25,10 @@ Optional but recommended:
 
 ## 3) Account values already set
 
-This local copy is already prepared for your GitHub account:
+Set these values for your own account:
 
-- GitHub user: `Vojsooo`
-- Repository URL: `https://github.com/Vojsooo/ha-ember-gateway`
+- GitHub user: `<your_github_username>`
+- Repository URL: `https://github.com/<your_github_username>/ha-ember-gateway`
 
 ## 4) Push code to GitHub
 
@@ -40,11 +40,12 @@ git init
 git add .
 git commit -m "Initial standalone + Home Assistant add-on repository"
 git branch -M main
-git remote add origin https://github.com/Vojsooo/ha-ember-gateway.git
+git remote add origin https://github.com/<your_github_username>/ha-ember-gateway.git
 git push -u origin main
 ```
 
-If Git asks for credentials, use your GitHub login or a Personal Access Token.
+If Git asks for credentials, use your GitHub login or a Personal Access Token (PAT).
+Never store passwords or PATs in repository files, commits, issues, or documentation.
 
 ## 5) Enable GitHub Actions + GHCR package publishing
 
@@ -78,8 +79,8 @@ git push origin v0.1.1
 ```
 
 4. GitHub Actions builds and pushes:
-   - `ghcr.io/vojsooo/ha-ember-gateway-amd64:0.1.1`
-   - `ghcr.io/vojsooo/ha-ember-gateway-aarch64:0.1.1`
+   - `ghcr.io/<your_github_username>/ha-ember-gateway-amd64:0.1.1`
+   - `ghcr.io/<your_github_username>/ha-ember-gateway-aarch64:0.1.1`
 
 ## 7) Make GHCR package public
 
@@ -95,11 +96,13 @@ Home Assistant cannot pull private images without credentials.
 2. Open menu (top-right) -> `Repositories`.
 3. Add:
 
-`https://github.com/Vojsooo/ha-ember-gateway`
+`https://github.com/<your_github_username>/ha-ember-gateway`
 
 4. Install `HA Ember Gateway`.
 5. Start add-on.
-6. Open add-on Web UI (`port 8090`) and configure Home Assistant URL + token.
+6. Open add-on Web UI (`port 8090`).
+7. In add-on mode, keep Home Assistant URL empty and keep token empty.
+8. Save and apply configuration.
 
 ## 9) Ongoing automatic updates
 
